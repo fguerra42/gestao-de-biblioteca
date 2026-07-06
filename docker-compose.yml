@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Fi123456@
+      POSTGRES_DB: biblioteca
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://postgres:Fi123456@postgres:5432/biblioteca"
+      JWT_SECRET: "troca-por-uma-string-secreta-longa-e-aleatoria"
+      JWT_EXPIRES_IN: "7d"
+      NEXTAUTH_SECRET: "outra-string-secreta-aleatoria"
+      NEXTAUTH_URL: "http://localhost:4000"
+      FRONTEND_URL: "http://localhost:80"
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GITHUB_CLIENT_ID: "Ov23liV1XckEGfWiGpB2"
+      GITHUB_CLIENT_SECRET: "8aa5e18c684a3e60b9de57ac9e4464485836a90e"
+      GITHUB_REDIRECT_URI: "http://localhost:4000/api/auth/github/callback"
+    ports:
+      - "3011:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
