@@ -1,0 +1,267 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API - Sistema de Gestão de Biblioteca",
+    "version": "1.0.0",
+    "description": "API REST para gestão de livros, utilizadores e empréstimos de uma biblioteca."
+  },
+  "servers": [{ "url": "http://localhost:3000/api" }],
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": { "type": "apiKey", "in": "cookie", "name": "token" }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Registar novo utilizador",
+        "tags": ["Autenticação"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nome", "email", "password"],
+                "properties": {
+                  "nome": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string", "minLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Utilizador criado com sucesso" },
+          "400": { "description": "Dados inválidos" },
+          "409": { "description": "Email já cadastrado" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Autenticar utilizador",
+        "tags": ["Autenticação"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login efetuado, cookie JWT definido" },
+          "401": { "description": "Credenciais inválidas" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Encerrar sessão",
+        "tags": ["Autenticação"],
+        "responses": { "200": { "description": "Sessão encerrada" } }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Dados do utilizador autenticado",
+        "tags": ["Autenticação"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": {
+          "200": { "description": "Utilizador autenticado" },
+          "401": { "description": "Não autenticado" }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Solicitar recuperação de palavra-passe (simulada)",
+        "tags": ["Autenticação"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "email": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Link de recuperação gerado (simulado)" } }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Redefinir palavra-passe com token",
+        "tags": ["Autenticação"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["token", "novaSenha"],
+                "properties": {
+                  "token": { "type": "string" },
+                  "novaSenha": { "type": "string", "minLength": 6 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Palavra-passe redefinida" },
+          "400": { "description": "Token inválido ou expirado" }
+        }
+      }
+    },
+    "/auth/github": {
+      "get": {
+        "summary": "Iniciar login OAuth com GitHub",
+        "tags": ["Autenticação"],
+        "responses": { "302": { "description": "Redireciona para o GitHub" } }
+      }
+    },
+    "/books": {
+      "get": {
+        "summary": "Listar livros (com pesquisa opcional)",
+        "tags": ["Livros"],
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Termo de pesquisa (título, autor, ISBN)" }
+        ],
+        "responses": { "200": { "description": "Lista de livros" } }
+      },
+      "post": {
+        "summary": "Criar novo livro (apenas ADMIN)",
+        "tags": ["Livros"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["titulo", "autor", "isbn", "quantidadeTotal"],
+                "properties": {
+                  "titulo": { "type": "string" },
+                  "autor": { "type": "string" },
+                  "isbn": { "type": "string" },
+                  "categoriaId": { "type": "string", "nullable": true },
+                  "quantidadeTotal": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Livro criado" },
+          "403": { "description": "Acesso negado (não é ADMIN)" },
+          "409": { "description": "ISBN já existe" }
+        }
+      }
+    },
+    "/books/{id}": {
+      "get": {
+        "summary": "Obter livro por ID",
+        "tags": ["Livros"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Dados do livro" }, "404": { "description": "Não encontrado" } }
+      },
+      "put": {
+        "summary": "Atualizar livro (apenas ADMIN)",
+        "tags": ["Livros"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Livro atualizado" } }
+      },
+      "delete": {
+        "summary": "Remover livro (apenas ADMIN)",
+        "tags": ["Livros"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Livro removido" } }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "Listar categorias",
+        "tags": ["Categorias"],
+        "responses": { "200": { "description": "Lista de categorias" } }
+      },
+      "post": {
+        "summary": "Criar categoria (apenas ADMIN)",
+        "tags": ["Categorias"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "required": ["nome"], "properties": { "nome": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Categoria criada" } }
+      }
+    },
+    "/loans": {
+      "get": {
+        "summary": "Listar empréstimos (USER vê os seus, ADMIN vê todos)",
+        "tags": ["Empréstimos"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Lista de empréstimos" } }
+      },
+      "post": {
+        "summary": "Criar empréstimo (não permitido para ADMIN)",
+        "tags": ["Empréstimos"],
+        "security": [{ "cookieAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["bookId"],
+                "properties": {
+                  "bookId": { "type": "string" },
+                  "diasParaDevolucao": { "type": "integer", "default": 14 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Empréstimo criado" },
+          "403": { "description": "ADMIN não pode emprestar" },
+          "409": { "description": "Sem exemplares disponíveis" }
+        }
+      }
+    },
+    "/loans/{id}": {
+      "put": {
+        "summary": "Registar devolução de empréstimo",
+        "tags": ["Empréstimos"],
+        "security": [{ "cookieAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Devolução registada" },
+          "403": { "description": "Não é o dono do empréstimo" }
+        }
+      }
+    },
+    "/dashboard/stats": {
+      "get": {
+        "summary": "Estatísticas do dashboard (apenas ADMIN)",
+        "tags": ["Dashboard"],
+        "security": [{ "cookieAuth": [] }],
+        "responses": { "200": { "description": "Estatísticas agregadas" } }
+      }
+    }
+  }
+}
