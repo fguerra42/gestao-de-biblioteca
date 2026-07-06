@@ -20,7 +20,7 @@ export default function Login() {
   }
 
   function loginComGithub() {
-    window.location.href = "http://localhost:3000/api/auth/github";
+    window.location.href = "http://10.0.0.10:3000/api/auth/github";
   }
 
   return (

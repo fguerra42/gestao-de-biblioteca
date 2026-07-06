@@ -49,7 +49,7 @@ describe("Teste de concorrência - vários utilizadores emprestando o mesmo livr
   });
 
   function criarRequestComToken(token: string) {
-    const req = new NextRequest("http://localhost:3000/api/loans", {
+    const req = new NextRequest("http://10.0.0.10:3000/api/loans", {
       method: "POST",
       body: JSON.stringify({ bookId, diasParaDevolucao: 14 }),
     });

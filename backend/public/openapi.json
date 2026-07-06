@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "description": "API REST para gestão de livros, utilizadores e empréstimos de uma biblioteca."
   },
-  "servers": [{ "url": "http://localhost:3000/api" }],
+  "servers": [{ "url": "http://10.0.0.10:3000/api" }],
   "components": {
     "securitySchemes": {
       "cookieAuth": { "type": "apiKey", "in": "cookie", "name": "token" }
