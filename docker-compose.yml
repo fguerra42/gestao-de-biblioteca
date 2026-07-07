@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: biblioteca-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: Fi123456@
@@ -14,38 +15,54 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: biblioteca-backend
     environment:
       DATABASE_URL: "postgresql://postgres:Fi123456@postgres:5432/biblioteca"
       JWT_SECRET: "troca-por-uma-string-secreta-longa-e-aleatoria"
       JWT_EXPIRES_IN: "7d"
-      NEXTAUTH_SECRET: "outra-string-secreta-aleatoria"
-      NEXTAUTH_URL: "http://10.0.0.10:4000"
-      FRONTEND_URL: "http://10.0.0.10:80"
+
+      NEXTAUTH_SECRET: "outra-string-secreta-longa-e-aleatoria"
+      NEXTAUTH_URL: "http://10.0.0.10:3011"
+
+      FRONTEND_URL: "http://10.0.0.10:3010"
+
       GOOGLE_CLIENT_ID: ""
       GOOGLE_CLIENT_SECRET: ""
-      GITHUB_CLIENT_ID: "Ov23liV1XckEGfWiGpB2"
-      GITHUB_CLIENT_SECRET: "8aa5e18c684a3e60b9de57ac9e4464485836a90e"
-      GITHUB_REDIRECT_URI: "http://10.0.0.10:4000/api/auth/github/callback"
+
+      GITHUB_CLIENT_ID: "SEU_GITHUB_CLIENT_ID"
+      GITHUB_CLIENT_SECRET: "SEU_GITHUB_CLIENT_SECRET"
+      GITHUB_REDIRECT_URI: "http://10.0.0.10:3011/api/auth/github/callback"
+
     ports:
       - "3011:3000"
+
     depends_on:
       postgres:
         condition: service_healthy
+
     restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: biblioteca-frontend
+
+    environment:
+      NEXT_PUBLIC_API_URL: "http://10.0.0.10:3011"
+
     ports:
       - "3010:3010"
+
     depends_on:
       - backend
+
     restart: unless-stopped
 
 volumes:
